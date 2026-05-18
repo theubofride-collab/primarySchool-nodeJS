@@ -73,7 +73,13 @@ model Quartier {
 }
 
 model Ville {
-  createdAt       DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  libelle          String
+  description      String?
+
+  createdAt        DateTime @default(now())
+
+  eleves           Eleve[]
 }
 
 model Tuteur {
@@ -143,9 +149,19 @@ model Cycle {
 }
 
 model Classe {
-  enseignant          Enseignant @relation(fields: [enseignantId], references: [id])
-  matiere             Matiere @relation(fields: [matiereId], references: [id])
-  classe              Classe @relation(fields: [classeId], references: [id])
+  id          Int      @id @default(autoincrement())
+  libelle     String
+  description String?
+
+  cycleId     Int
+  cycle       Cycle    @relation(fields: [cycleId], references: [id])
+
+  inscriptions Inscription[]
+  enseignements Enseignement[]
+  evaluations   Evaluation[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Salle {
