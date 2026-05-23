@@ -1,22 +1,31 @@
+const { verifyToken } = require('../services/auth.service');
 const { allowedRoles } = require('../validators/user.validator');
 
 exports.authenticateUser = (req, res, next) => {
-  const authHeader = req.header('Authorization');
-  const roleHeader = req.header('x-user-role');
-  let role = null;
+  try {
+    const authHeader = req.header('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token d\'authentification manquant ou invalide.' });
+    }
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    role = authHeader.slice(7).trim().toUpperCase();
-  } else if (roleHeader) {
-    role = roleHeader.trim().toUpperCase();
+    const token = authHeader.slice(7).trim();
+    const payload = verifyToken(token);
+
+    if (!payload.role || !allowedRoles.includes(payload.role)) {
+      return res.status(403).json({ error: 'Role invalide ou non autorise.' });
+    }
+
+    req.user = {
+      id: payload.userId,
+      email: payload.email,
+      role: payload.role
+    };
+
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: `Authentification echouee: ${error.message}` });
   }
-
-  if (!role || !allowedRoles.includes(role)) {
-    return res.status(401).json({ error: 'Authentification requise ou rôle invalide.' });
-  }
-
-  req.user = { role };
-  next();
 };
 
 exports.authorizeRoles = (...allowed) => {
