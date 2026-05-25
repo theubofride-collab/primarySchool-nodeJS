@@ -1,66 +1,22 @@
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const userRepository = require('../repositories/user.repository');
 
 const ALLOWED_ROLES = ['ADMIN', 'SECRETAIRE', 'ENSEIGNANT'];
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
-// Hash password using SHA256 (simple approach, use bcryptjs in production)
-const hashPassword = (password) => {
-  return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = async (password) => bcrypt.hash(password, 10);
 
-// Compare password with hash
-const comparePassword = (password, hash) => {
-  return hashPassword(password) === hash;
-};
+const comparePassword = async (password, hash) => bcrypt.compare(password, hash);
 
-// Create JWT token (simple base64 + signature approach)
 const generateToken = (userId, email, role) => {
-  const payload = {
-    userId,
-    email,
-    role,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-  };
-  
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const signature = crypto
-    .createHmac('sha256', JWT_SECRET)
-    .update(`${header}.${body}`)
-    .digest('base64');
-  
-  return `${header}.${body}.${signature}`;
+  return jwt.sign({ userId, email, role }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN
+  });
 };
 
-// Verify JWT token
-const verifyToken = (token) => {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) throw new Error('Invalid token format.');
-    
-    const [header, body, signature] = parts;
-    const expectedSignature = crypto
-      .createHmac('sha256', JWT_SECRET)
-      .update(`${header}.${body}`)
-      .digest('base64');
-    
-    if (signature !== expectedSignature) {
-      throw new Error('Invalid token signature.');
-    }
-    
-    const payload = JSON.parse(Buffer.from(body, 'base64').toString());
-    const now = Math.floor(Date.now() / 1000);
-    if (payload.exp < now) {
-      throw new Error('Token expired.');
-    }
-    
-    return payload;
-  } catch (error) {
-    throw new Error(`Token verification failed: ${error.message}`);
-  }
-};
+const verifyToken = (token) => jwt.verify(token, JWT_SECRET);
 
 exports.login = async (email, password) => {
   if (!email || !password) {
@@ -72,8 +28,7 @@ exports.login = async (email, password) => {
     throw new Error('Identifiants invalides.');
   }
 
-  // Compare plaintext password with stored hash
-  if (!comparePassword(password, user.password)) {
+  if (!(await comparePassword(password, user.password))) {
     throw new Error('Identifiants invalides.');
   }
 
@@ -113,8 +68,7 @@ exports.register = async (data) => {
     throw new Error('Email déjà utilisé.');
   }
 
-  // Hash password before saving
-  const hashedPassword = hashPassword(data.password);
+  const hashedPassword = await hashPassword(data.password);
   const userData = {
     ...data,
     password: hashedPassword,

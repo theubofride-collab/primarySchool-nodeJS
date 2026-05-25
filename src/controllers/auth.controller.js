@@ -2,7 +2,7 @@ const authService = require('../services/auth.service');
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({ 
@@ -21,7 +21,7 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { nom, prenom, email, password, role, telephone, photoUrl, actif } = req.body;
+    const { nom, prenom, email, password, role, telephone, photoUrl, actif } = req.body || {};
 
     // Validate required fields
     if (!nom || !prenom || !email || !password || !role) {

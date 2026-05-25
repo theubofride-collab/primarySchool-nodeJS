@@ -1,7 +1,23 @@
 const prisma = require('../prisma/client');
 
 exports.findAll = async () => {
-  return prisma.user.findMany();
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      nom: true,
+      prenom: true,
+      email: true,
+      telephone: true,
+      role: true,
+      photoUrl: true,
+      actif: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: {
+      id: 'asc',
+    },
+  });
 };
 
 exports.findById = async (id) => {

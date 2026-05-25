@@ -1,7 +1,12 @@
+const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/user.repository');
 
 exports.createUser = async (data) => {
-  return userRepository.create(data);
+  const userData = { ...data };
+  if (userData.password) {
+    userData.password = await bcrypt.hash(userData.password, 10);
+  }
+  return userRepository.create(userData);
 };
 
 exports.getAllUsers = async () => {
@@ -18,7 +23,11 @@ exports.updateUser = async (id, data) => {
   if (!existing) {
     return null;
   }
-  return userRepository.update(userId, data);
+  const userData = { ...data };
+  if (userData.password) {
+    userData.password = await bcrypt.hash(userData.password, 10);
+  }
+  return userRepository.update(userId, userData);
 };
 
 exports.deleteUser = async (id) => {
