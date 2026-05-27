@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const eleveRoutes = require('./routes/eleve.routes');
 const createCrudRoutes = require('./routes/crud.routes');
 const errorHandler = require('./middlewares/error.middleware');
 
@@ -17,12 +18,12 @@ app.use('/auth', authRoutes);
 
 // User routes (protected)
 app.use('/users', userRoutes);
+app.use('/eleves', eleveRoutes);
 
 const crudRoutes = [
   { path: '/quartiers', modelName: 'quartier', label: 'Quartier' },
   { path: '/villes', modelName: 'ville', label: 'Ville' },
   { path: '/tuteurs', modelName: 'tuteur', label: 'Tuteur' },
-  { path: '/eleves', modelName: 'eleve', label: 'Eleve' },
   { path: '/eleve-tuteurs', modelName: 'eleveTuteur', label: 'EleveTuteur' },
   { path: '/cycles', modelName: 'cycle', label: 'Cycle' },
   { path: '/classes', modelName: 'classe', label: 'Classe' },
